@@ -1,0 +1,786 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Clase gratuita: bots MEV, arbitraje y flash loans explicados sin tecnicismos, y cómo protegerte de los bots que se aprovechan de ti.">
+<meta property="og:title" content="Clase gratuita · Bots MEV y arbitraje sin tecnicismos">
+<meta property="og:description" content="La maquinaria invisible de la blockchain, explicada fácil. Incluye video y guía PDF.">
+<meta property="og:image" content="media/poster.png">
+</head>
+<body>
+<title>Bots MEV sin Tecnicismos</title>
+<link rel="icon" href="media/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one dark "terminal" world. Centered squeeze-page spine (modelo Camaleón),
+   hero splits copy | live mempool simulation; sections alternate ink / navy bands. */
+:root {
+  color-scheme: dark;
+  --ink: #05070d;        /* fondo principal (negro) */
+  --navy: #0a1226;       /* bandas alternas (azul marino profundo) */
+  --panel: #0e1830;      /* tarjetas */
+  --line: rgba(120, 160, 255, .16);
+  --fg: #eaf0ff;         /* texto blanco */
+  --muted: #93a2c6;      /* texto secundario */
+  --neon: #2f7bff;       /* azul eléctrico: botones */
+  --glow: #5ec8ff;       /* destello cian */
+  --ok: #2fd4a3;
+  --no: #ff6b7a;
+  --display: "Sora", "Segoe UI", system-ui, sans-serif;
+  --body: "Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  --wrap: 1120px;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--ink); color: var(--fg);
+  font: 400 17px/1.6 var(--body);
+  -webkit-font-smoothing: antialiased;
+}
+a { color: inherit; }
+h1, h2, h3 { font-family: var(--display); margin: 0; text-wrap: balance; letter-spacing: -.02em; }
+p { margin: 0; }
+.wrap { max-width: var(--wrap); margin: 0 auto; padding-inline: 20px; }
+.band { padding-block: clamp(64px, 9vw, 112px); }
+.band.alt { background: var(--navy); border-block: 1px solid var(--line); }
+.eyebrow {
+  font: 600 12.5px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--glow);
+}
+.sec-head { display: grid; gap: 14px; max-width: 720px; margin: 0 auto 48px; text-align: center; }
+.sec-head h2 { font-size: clamp(28px, 4.2vw, 44px); line-height: 1.12; font-weight: 700; }
+.sec-head p { color: var(--muted); font-size: 18px; }
+.hl { background: linear-gradient(92deg, var(--neon), var(--glow)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+/* ---------- botones ---------- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  font: 700 18px/1.2 var(--display); color: #fff; text-decoration: none; text-align: center;
+  background: linear-gradient(180deg, #3d88ff, var(--neon));
+  border: 1px solid rgba(150, 200, 255, .45); border-radius: 14px;
+  padding: 19px 30px; cursor: pointer;
+  box-shadow: 0 0 0 1px rgba(47,123,255,.25), 0 12px 40px -8px rgba(47,123,255,.75), 0 0 60px -10px rgba(94,200,255,.55);
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+.btn:hover { transform: translateY(-2px); box-shadow: 0 0 0 1px rgba(94,200,255,.5), 0 16px 48px -6px rgba(47,123,255,.9), 0 0 80px -6px rgba(94,200,255,.7); }
+.btn:focus-visible, input:focus-visible, summary:focus-visible { outline: 2px solid var(--glow); outline-offset: 3px; }
+.btn .arr { font-family: var(--mono); transition: transform .18s; }
+.btn:hover .arr { transform: translateX(4px); }
+.micro { font-size: 14px; color: var(--muted); display: flex; gap: 8px; align-items: center; justify-content: center; flex-wrap: wrap; }
+.micro svg { width: 14px; height: 14px; }
+
+/* ---------- barra superior ---------- */
+.top { padding-block: 22px; border-bottom: 1px solid var(--line); }
+.top .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.logo { display: flex; align-items: baseline; gap: 12px; text-decoration: none; }
+.logo b { font: 800 26px/1 var(--display); letter-spacing: .14em; color: #dfe6f5; }
+.logo b i { font-style: normal; color: var(--neon); text-shadow: 0 0 18px rgba(47,123,255,.8); }
+.logo span { font: 500 11px/1 var(--mono); letter-spacing: .22em; color: var(--muted); text-transform: uppercase; }
+.top a.mini { font: 600 14px/1 var(--body); color: var(--glow); text-decoration: none; white-space: nowrap; }
+
+/* ---------- hero ---------- */
+.hero { position: relative; overflow: hidden; padding-block: clamp(48px, 7vw, 88px) clamp(56px, 8vw, 96px); }
+.hero::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(600px 380px at 78% 30%, rgba(47,123,255,.22), transparent 70%),
+    radial-gradient(500px 300px at 10% 0%, rgba(94,200,255,.10), transparent 70%),
+    linear-gradient(rgba(120,160,255,.05) 1px, transparent 1px) 0 0 / 44px 44px,
+    linear-gradient(90deg, rgba(120,160,255,.05) 1px, transparent 1px) 0 0 / 44px 44px;
+  mask-image: linear-gradient(#000 60%, transparent);
+}
+.hero .wrap { position: relative; display: grid; grid-template-columns: 1.08fr .92fr; gap: 56px; align-items: center; }
+.hero-copy { display: grid; gap: 24px; min-width: 0; }
+.badge {
+  justify-self: start; display: inline-flex; align-items: center; gap: 10px;
+  padding: 8px 16px; border-radius: 999px; border: 1px solid var(--line);
+  background: rgba(47,123,255,.08); font: 600 13.5px/1.2 var(--body); color: var(--fg);
+}
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 10px var(--ok); animation: pulse 1.8s infinite; flex: none; }
+@keyframes pulse { 50% { opacity: .35; } }
+.pre { font: 600 15px/1.4 var(--body); color: var(--glow); }
+.hero h1 { font-size: clamp(36px, 5.6vw, 64px); line-height: 1.04; font-weight: 800; }
+.hero .sub { font-size: clamp(17px, 1.6vw, 20px); color: #c3cee8; max-width: 58ch; }
+.hero .sub strong { color: var(--fg); }
+.checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.checks li { display: grid; grid-template-columns: 24px 1fr; gap: 12px; align-items: start; color: #d5ddf0; }
+.checks svg { width: 22px; height: 22px; color: var(--ok); margin-top: 2px; }
+.hero-cta { display: grid; gap: 12px; justify-items: start; }
+.hero-cta .micro { justify-content: flex-start; }
+
+/* simulación de mempool */
+.pool {
+  min-width: 0; border: 1px solid rgba(94,200,255,.28); border-radius: 20px; overflow: hidden;
+  background: linear-gradient(180deg, rgba(14,24,48,.92), rgba(5,7,13,.92));
+  box-shadow: 0 30px 80px -30px rgba(47,123,255,.6), inset 0 1px 0 rgba(255,255,255,.06);
+  font-family: var(--mono);
+}
+.pool-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--line); font-size: 12px; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
+.pool-head .live { display: flex; gap: 8px; align-items: center; color: var(--ok); }
+.lanes { display: grid; grid-template-columns: 1fr; }
+.lane-label { padding: 10px 18px 6px; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); display: flex; justify-content: space-between; }
+.lane-label.vip { color: var(--glow); border-top: 1px dashed rgba(94,200,255,.3); }
+.txs { list-style: none; margin: 0; padding: 0 10px 10px; display: grid; gap: 6px; min-height: 236px; align-content: start; }
+.tx {
+  display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center;
+  padding: 9px 10px; border-radius: 10px; background: rgba(255,255,255,.025); border: 1px solid transparent;
+  font-size: 12.5px; animation: slidein .45s ease both;
+}
+.tx .h { color: #7f8fb6; }
+.tx .d { color: #d7def0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.tx .d em { font-style: normal; color: var(--muted); }
+.chip { font-size: 10.5px; font-weight: 600; letter-spacing: .08em; padding: 4px 8px; border-radius: 6px; white-space: nowrap; }
+.s-det { color: var(--glow); background: rgba(94,200,255,.12); }
+.s-ana { color: #ffd166; background: rgba(255,209,102,.12); }
+.s-eje { color: #fff; background: var(--neon); }
+.s-ver { color: var(--ok); background: rgba(47,212,163,.13); }
+.s-no  { color: var(--no); background: rgba(255,107,122,.12); }
+.tx.is-vip { border-color: rgba(94,200,255,.35); background: rgba(47,123,255,.10); }
+@keyframes slidein { from { opacity: 0; transform: translateY(-6px); } }
+.pool-foot { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 12px 18px; border-top: 1px solid var(--line); font-size: 11.5px; color: var(--muted); }
+.pool-foot b { color: var(--fg); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* ---------- VSL ---------- */
+.vsl-wrap { max-width: 900px; margin: 0 auto; display: grid; gap: 22px; }
+.vsl {
+  position: relative; aspect-ratio: 16 / 9; max-width: 100%; border-radius: 22px; overflow: hidden;
+  border: 1px solid rgba(94,200,255,.3); cursor: pointer; text-decoration: none;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(47,123,255,.35), transparent 55%),
+    repeating-radial-gradient(circle at 50% 50%, rgba(94,200,255,.10) 0 1px, transparent 1px 46px),
+    var(--navy);
+  display: grid; place-items: center; box-shadow: 0 40px 90px -40px rgba(47,123,255,.7);
+}
+.vsl-video { width: 100%; max-width: 100%; aspect-ratio: 16 / 9; border-radius: 22px; border: 1px solid rgba(94,200,255,.3); background: var(--navy); box-shadow: 0 40px 90px -40px rgba(47,123,255,.7); }
+.vsl .play {
+  width: 92px; height: 92px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--neon); box-shadow: 0 0 0 14px rgba(47,123,255,.18), 0 0 70px rgba(94,200,255,.8);
+  transition: transform .2s;
+}
+.vsl:hover .play { transform: scale(1.06); }
+.vsl .play svg { width: 34px; height: 34px; margin-left: 5px; color: #fff; }
+.vsl .cap { position: absolute; left: 22px; right: 22px; bottom: 20px; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font: 600 13px/1.3 var(--mono); color: #c3cee8; }
+.vsl .cap span:first-child { color: var(--glow); }
+.vsl .tl { position: absolute; top: 20px; left: 22px; right: 22px; font: 700 clamp(16px, 2.4vw, 24px)/1.2 var(--display); color: var(--fg); text-align: left; max-width: 26ch; }
+
+/* ---------- dolor ---------- */
+.pain { max-width: 780px; margin: 0 auto; display: grid; gap: 14px; }
+.pain-item { display: grid; grid-template-columns: 28px 1fr; gap: 14px; align-items: start; padding: 18px 22px; border-radius: 14px; background: rgba(255,107,122,.05); border: 1px solid rgba(255,107,122,.18); color: #dbe2f3; }
+.pain-item svg { width: 22px; height: 22px; color: var(--no); margin-top: 3px; }
+.bridge { max-width: 680px; margin: 36px auto 0; text-align: center; display: grid; gap: 10px; font-size: 19px; color: #c3cee8; }
+.bridge strong { color: var(--fg); font-family: var(--display); font-size: clamp(20px, 2.4vw, 26px); line-height: 1.3; }
+
+/* ---------- hoy / después ---------- */
+.vs { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 960px; margin: 0 auto; }
+.vs-card { border-radius: 18px; padding: 30px; display: grid; gap: 18px; align-content: start; min-width: 0; }
+.vs-card h3 { font-size: 22px; display: flex; gap: 10px; align-items: center; }
+.vs-card ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.vs-card li { display: grid; grid-template-columns: 22px 1fr; gap: 12px; color: #d5ddf0; }
+.vs-card li svg { width: 20px; height: 20px; margin-top: 3px; }
+.vs-before { background: rgba(255,255,255,.025); border: 1px solid var(--line); }
+.vs-before h3 { color: var(--muted); }
+.vs-before svg { color: var(--no); }
+.vs-after { background: linear-gradient(180deg, rgba(47,123,255,.16), rgba(47,123,255,.04)); border: 1px solid rgba(94,200,255,.4); box-shadow: 0 0 60px -20px rgba(47,123,255,.6); }
+.vs-after svg { color: var(--ok); }
+.center-cta { display: grid; gap: 12px; justify-items: center; margin-top: 44px; }
+
+/* ---------- 3 pilares ---------- */
+.pillars { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.pillar { position: relative; border-radius: 20px; padding: 32px 28px; background: var(--panel); border: 1px solid var(--line); display: grid; gap: 14px; align-content: start; min-width: 0; overflow: hidden; }
+.pillar::after { content: ""; position: absolute; inset: 0 0 auto; height: 2px; background: linear-gradient(90deg, transparent, var(--glow), transparent); opacity: .7; }
+.pillar .ico { width: 52px; height: 52px; border-radius: 14px; display: grid; place-items: center; background: rgba(47,123,255,.14); border: 1px solid rgba(94,200,255,.3); color: var(--glow); }
+.pillar .ico svg { width: 26px; height: 26px; }
+.pillar .k { font: 600 12px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--glow); }
+.pillar h3 { font-size: 22px; line-height: 1.25; }
+.pillar p { color: #c0cbe4; font-size: 16px; }
+.analogy { margin-top: 4px; padding: 14px 16px; border-radius: 12px; background: rgba(5,7,13,.6); border: 1px dashed rgba(94,200,255,.3); font-size: 14.5px; color: #c3cee8; }
+.analogy b { color: var(--glow); font-family: var(--mono); font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase; display: block; margin-bottom: 4px; }
+
+/* ---------- 4 pasos ---------- */
+.steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; position: relative; counter-reset: s; }
+.steps::before { content: ""; position: absolute; top: 34px; left: 12%; right: 12%; height: 2px; background: linear-gradient(90deg, var(--neon), var(--glow), var(--ok)); opacity: .55; }
+.step { position: relative; display: grid; gap: 12px; justify-items: center; text-align: center; padding: 0 14px; min-width: 0; }
+.step .n { width: 68px; height: 68px; border-radius: 50%; display: grid; place-items: center; background: var(--ink); border: 2px solid var(--neon); box-shadow: 0 0 30px -4px rgba(47,123,255,.8); color: var(--glow); }
+.step .n svg { width: 28px; height: 28px; }
+.step:last-child .n { border-color: var(--ok); color: var(--ok); box-shadow: 0 0 30px -4px rgba(47,212,163,.7); }
+.step h3 { font-size: 21px; }
+.step h3::before { counter-increment: s; content: "0" counter(s) " · "; font: 600 13px/1 var(--mono); color: var(--muted); vertical-align: middle; }
+.step p { color: #c0cbe4; font-size: 15.5px; max-width: 26ch; }
+.step code { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+
+/* ---------- glosario ---------- */
+.gloss { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; }
+.term { background: var(--ink); padding: 24px 24px 26px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+.term dt { font: 600 15px/1.2 var(--mono); color: var(--glow); }
+.term dd { margin: 0; color: #c0cbe4; font-size: 15.5px; }
+
+/* ---------- para quién ---------- */
+.who { display: grid; grid-template-columns: 1.35fr 1fr; gap: 20px; }
+.who-card { border-radius: 20px; padding: 32px; display: grid; gap: 18px; align-content: start; min-width: 0; }
+.who-card h3 { font-size: 22px; }
+.who-card ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; }
+.who-card li { display: grid; grid-template-columns: 22px 1fr; gap: 12px; color: #d5ddf0; }
+.who-card li svg { width: 20px; height: 20px; margin-top: 3px; }
+.who-card li strong { color: var(--fg); }
+.who-yes { background: var(--panel); border: 1px solid rgba(94,200,255,.35); }
+.who-yes svg { color: var(--ok); }
+.who-no { background: rgba(255,255,255,.02); border: 1px solid var(--line); }
+.who-no h3 { color: var(--muted); }
+.who-no svg { color: var(--no); }
+
+/* ---------- registro ---------- */
+.reg { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; }
+.reg-copy { display: grid; gap: 20px; min-width: 0; }
+.reg-copy h2 { font-size: clamp(30px, 4.4vw, 48px); line-height: 1.08; font-weight: 800; }
+.reg-copy p { color: #c3cee8; font-size: 18px; }
+.urg { display: grid; gap: 10px; padding: 18px 20px; border-radius: 14px; border: 1px solid rgba(255,209,102,.3); background: rgba(255,209,102,.06); color: #f3e3b8; font-size: 15.5px; }
+.urg b { font: 600 12px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: #ffd166; }
+.form-card { min-width: 0; border-radius: 22px; padding: 34px 30px; background: linear-gradient(180deg, var(--panel), var(--navy)); border: 1px solid rgba(94,200,255,.4); box-shadow: 0 0 0 6px rgba(47,123,255,.06), 0 40px 90px -40px rgba(47,123,255,.8); display: grid; gap: 18px; }
+.form-card h3 { font-size: 24px; }
+.form-card .fs { color: var(--muted); font-size: 15px; margin-top: -8px; }
+form { display: grid; gap: 16px; }
+.field { display: grid; gap: 7px; }
+.field label { font: 600 14px/1.2 var(--body); color: #d5ddf0; }
+.field input {
+  width: 100%; font: 500 16px/1.2 var(--body); color: var(--fg);
+  background: rgba(5,7,13,.7); border: 1px solid rgba(120,160,255,.28); border-radius: 12px; padding: 15px 16px;
+  transition: border-color .15s, box-shadow .15s;
+}
+.field input::placeholder { color: #5f6d92; }
+.field input:focus { border-color: var(--glow); box-shadow: 0 0 0 4px rgba(94,200,255,.15); outline: none; }
+.field.bad input { border-color: var(--no); }
+.field .err, #sendErr { font-size: 13px; color: var(--no); }
+#sendErr a { color: var(--glow); }
+form .btn:disabled { opacity: .6; cursor: wait; }
+form .btn { width: 100%; margin-top: 4px; }
+.done { display: grid; gap: 16px; text-align: center; justify-items: center; padding-block: 12px; }
+.done .ok { width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; background: rgba(47,212,163,.14); border: 1px solid var(--ok); color: var(--ok); }
+.done .ok svg { width: 30px; height: 30px; }
+.done p { color: #c3cee8; }
+
+/* ---------- FAQ ---------- */
+.faq { max-width: 800px; margin: 0 auto; display: grid; gap: 12px; }
+.faq details { border-radius: 14px; background: var(--panel); border: 1px solid var(--line); }
+.faq details[open] { border-color: rgba(94,200,255,.35); }
+.faq summary { list-style: none; cursor: pointer; padding: 20px 24px; display: flex; justify-content: space-between; gap: 16px; align-items: center; font: 600 17px/1.35 var(--display); }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: "+"; font: 400 24px/1 var(--mono); color: var(--glow); transition: transform .2s; flex: none; }
+.faq details[open] summary::after { transform: rotate(45deg); }
+.faq .a { padding: 0 24px 22px; color: #c0cbe4; font-size: 16px; display: grid; gap: 10px; }
+
+/* ---------- footer ---------- */
+footer { border-top: 1px solid var(--line); padding-block: 44px 120px; color: var(--muted); font-size: 13.5px; }
+footer .wrap { display: grid; gap: 20px; }
+footer .legal { max-width: 860px; line-height: 1.65; }
+footer .legal strong { color: #c3cee8; }
+
+/* ---------- barra CTA fija (móvil) ---------- */
+.sticky {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+  background: rgba(5,7,13,.88); backdrop-filter: blur(12px); border-top: 1px solid var(--line);
+  display: none;
+}
+.sticky .btn { width: 100%; padding: 15px 20px; font-size: 16px; }
+
+/* ---------- responsive ---------- */
+@media (max-width: 960px) {
+  .hero .wrap, .reg { grid-template-columns: 1fr; gap: 40px; }
+  .pillars { grid-template-columns: 1fr; }
+  .steps { grid-template-columns: 1fr 1fr; row-gap: 40px; }
+  .steps::before { display: none; }
+  .gloss { grid-template-columns: 1fr 1fr; }
+  .who { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+  body { font-size: 16px; }
+  .vs { grid-template-columns: 1fr; }
+  .gloss { grid-template-columns: 1fr; }
+  .steps { grid-template-columns: 1fr; }
+  .hero-cta, .hero-cta .micro { justify-items: stretch; justify-content: center; }
+  .hero-cta .btn { width: 100%; }
+  .badge { justify-self: stretch; justify-content: center; }
+  .sticky { display: block; }
+  .logo span { display: none; }
+  .vs-card, .who-card, .pillar { padding: 26px 22px; }
+  .form-card { padding: 28px 20px; }
+  .vsl-video { width: 100%; max-width: 100%; aspect-ratio: 16 / 9; border-radius: 22px; border: 1px solid rgba(94,200,255,.3); background: var(--navy); box-shadow: 0 40px 90px -40px rgba(47,123,255,.7); }
+.vsl .play { width: 72px; height: 72px; }
+  .vsl .cap { font-size: 11.5px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  html { scroll-behavior: auto; }
+}
+</style>
+
+<!-- Íconos reutilizables -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="m7.8 12.3 2.8 2.8 5.6-5.8"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9.5"/><path d="m9 9 6 6m0-6-6 6"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12.5-7.5a1 1 0 0 0 0-1.72L8.5 3.64A1 1 0 0 0 7 4.5Z"/></symbol>
+  <symbol id="i-scan" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2M8.5 11h5M11 8.5v5"/></symbol>
+  <symbol id="i-scale" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M7 21h10M5 7h14M5 7l-3 7a3.5 3.5 0 0 0 6 0L5 7Zm14 0-3 7a3.5 3.5 0 0 0 6 0l-3-7Z"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6l-8-3Z"/><path d="m8.5 12 2.5 2.5 4.5-5"/></symbol>
+  <symbol id="i-swap" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13l-3-3M20 16H7l3 3"/></symbol>
+  <symbol id="i-loan" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 9 9"/><path d="M21 3v6h-6"/><path d="M12 7.5v9M14.5 9.5c-.5-1-1.4-1.5-2.5-1.5-1.4 0-2.5.8-2.5 2s1.1 1.6 2.5 2 2.5.8 2.5 2-1.1 2-2.5 2c-1.2 0-2.1-.6-2.6-1.6"/></symbol>
+  <symbol id="i-ai" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="6" y="6" width="12" height="12" rx="2.5"/><path d="M9.5 10v4M14.5 10v4M12 2v4M12 18v4M2 12h4M18 12h4"/></symbol>
+</svg>
+
+<!-- ============ BARRA SUPERIOR ============ -->
+<header class="top">
+  <div class="wrap">
+    <a class="logo" href="#inicio" aria-label="Cripto sin tecnicismos">
+      <b>CRIPTO<i>·</i>FÁCIL</b><span>Sin tecnicismos</span>
+    </a>
+    <a class="mini" href="#registro">Clase gratis →</a>
+  </div>
+</header>
+
+<main id="inicio">
+
+<!-- ============ SECCIÓN 1 · HERO ============ -->
+<section class="hero">
+  <div class="wrap">
+    <div class="hero-copy">
+      <span class="badge"><span class="dot"></span>Clase gratuita · Cupos limitados por sesión</span>
+      <p class="pre">Para entusiastas de la tecnología y nuevos inversores que no quieren vivir pegados a una gráfica</p>
+      <h1>Descubre <span class="hl">la maquinaria invisible</span> que mueve la blockchain</h1>
+      <p class="sub">En esta clase gratuita verás cómo funcionan los <strong>bots MEV y el arbitraje</strong>, cómo extraen valor del orden de las transacciones y <strong>cómo protegerte</strong> de los bots que se aprovechan de los usuarios. Sin programación y sin promesas de ganancias.</p>
+      <ul class="checks">
+        <li><svg aria-hidden="true"><use href="#i-check"/></svg><span>Entiende el MEV y el arbitraje sin tecnicismos ni programación</span></li>
+        <li><svg aria-hidden="true"><use href="#i-check"/></svg><span>Aprende qué son los flash loans y por qué se ejecutan en una sola transacción</span></li>
+        <li><svg aria-hidden="true"><use href="#i-check"/></svg><span>Aprende a reconocer un ataque sándwich y las promesas de "ganancias fijas" con bots</span></li>
+      </ul>
+      <div class="hero-cta">
+        <a class="btn" href="#registro">Sí, quiero acceder a la clase gratis <span class="arr">→</span></a>
+        <p class="micro"><svg aria-hidden="true"><use href="#i-lock"/></svg>100% gratis · Sin tarjeta · Incluye video y guía PDF</p>
+      </div>
+    </div>
+
+    <aside class="pool" aria-label="Simulación ilustrativa de la mempool">
+      <div class="pool-head">
+        <span>Mempool · sala de espera</span>
+        <span class="live"><span class="dot"></span>Simulación</span>
+      </div>
+      <div class="lanes">
+        <div class="lane-label"><span>Transacciones en espera</span><span>gwei</span></div>
+        <ul class="txs" id="txs"></ul>
+        <div class="lane-label vip"><span>Carril VIP · bundle privado</span><span id="blk">bloque #—</span></div>
+      </div>
+      <div class="pool-foot">
+        <span>Margen = ingreso bruto − gas</span>
+        <span>Go: <b id="go">0</b> · No-Go: <b id="nogo">0</b></span>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<!-- ============ VSL ============ -->
+<section class="band alt" aria-labelledby="vsl-t">
+  <div class="wrap vsl-wrap">
+    <div class="sec-head" style="margin-bottom:0">
+      <span class="eyebrow">Mira esto primero</span>
+      <h2 id="vsl-t">En minuto y medio vas a ver lo que pasa antes de que tu transacción llegue a la blockchain</h2>
+    </div>
+    <video class="vsl-video" controls preload="metadata" playsinline poster="media/poster.png">
+      <source src="media/bots-mev-arbitraje.mp4" type="video/mp4">
+      Tu navegador no puede reproducir el video. <a href="media/bots-mev-arbitraje.mp4">Descárgalo aquí</a>.
+    </video>
+    <div class="center-cta" style="margin-top:6px">
+      <a class="btn" href="#registro">Quiero la clase completa gratis <span class="arr">→</span></a>
+      <p class="micro"><a href="media/guia-bots-mev-arbitraje.pdf" target="_blank" rel="noopener" style="color:var(--glow)">Descarga la guía en PDF (14 páginas)</a></p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ DOLOR ============ -->
+<section class="band" aria-labelledby="dolor-t">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">Seamos sinceros</span>
+      <h2 id="dolor-t">¿Llevas meses intentando el trading manual y sientes que siempre llegas tarde?</h2>
+    </div>
+    <div class="pain">
+      <div class="pain-item"><svg aria-hidden="true"><use href="#i-x"/></svg><span>Pasas horas frente a velas, indicadores y gráficas que nadie te explicó bien.</span></div>
+      <div class="pain-item"><svg aria-hidden="true"><use href="#i-x"/></svg><span>Compras por emoción, vendes por miedo y al final del mes las cuentas no cuadran.</span></div>
+      <div class="pain-item"><svg aria-hidden="true"><use href="#i-x"/></svg><span>Tienes trabajo, familia y responsabilidades. No puedes vigilar el mercado 24 horas.</span></div>
+      <div class="pain-item"><svg aria-hidden="true"><use href="#i-x"/></svg><span>Oyes hablar de bots, IA y DeFi, pero todo suena a código y a promesas difíciles de comprobar.</span></div>
+    </div>
+    <div class="bridge">
+      <p>El problema no eres tú. Mientras una persona tarda segundos en reaccionar, la blockchain se decide en milisegundos.</p>
+      <strong>En esta clase verás la maquinaria que opera a esa velocidad y cómo funciona por dentro.</strong>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ANTES / DESPUÉS ============ -->
+<section class="band alt" aria-labelledby="vs-t">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">Lo que cambia</span>
+      <h2 id="vs-t">De mirar gráficas a entender cómo se mueve el mercado</h2>
+      <p>Lo que te llevas de la clase, aunque nunca hayas escrito una línea de código.</p>
+    </div>
+    <div class="vs">
+      <div class="vs-card vs-before">
+        <h3>Hoy</h3>
+        <ul>
+          <li><svg aria-hidden="true"><use href="#i-x"/></svg><span>Operas a mano, con horarios, nervios y decisiones de último segundo</span></li>
+          <li><svg aria-hidden="true"><use href="#i-x"/></svg><span>Escuchas "MEV", "mempool" o "flash loan" y no sabes qué significan</span></li>
+          <li><svg aria-hidden="true"><use href="#i-x"/></svg><span>Dependes de capturas de pantalla y de lo que otros te cuentan</span></li>
+          <li><svg aria-hidden="true"><use href="#i-x"/></svg><span>No sabes distinguir un bot que aporta eficiencia de uno que te cobra un impuesto oculto</span></li>
+        </ul>
+      </div>
+      <div class="vs-card vs-after">
+        <h3>Después de la clase</h3>
+        <ul>
+          <li><svg aria-hidden="true"><use href="#i-check"/></svg><span>Entiendes cómo la tecnología detecta y ejecuta oportunidades sin intervención manual</span></li>
+          <li><svg aria-hidden="true"><use href="#i-check"/></svg><span>Hablas de MEV, arbitraje y flash loans con tus propias palabras</span></li>
+          <li><svg aria-hidden="true"><use href="#i-check"/></svg><span>Sabes comprobar cada operación directamente en la blockchain</span></li>
+          <li><svg aria-hidden="true"><use href="#i-check"/></svg><span>Reconoces un sandwich o un frontrunning y sabes cómo protegerte</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="center-cta">
+      <a class="btn" href="#registro">Reservar mi lugar gratis <span class="arr">→</span></a>
+      <p class="micro">Gratis · Sin compromiso · Cupos limitados</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SECCIÓN 2 · 3 PILARES ============ -->
+<section class="band" aria-labelledby="pil-t">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">Qué aprenderás en esta clase gratuita</span>
+      <h2 id="pil-t">Los 3 pilares de la maquinaria invisible</h2>
+      <p>Explicados como te los contaría un amigo que trabaja en esto.</p>
+    </div>
+    <div class="pillars">
+      <article class="pillar">
+        <span class="ico"><svg aria-hidden="true"><use href="#i-swap"/></svg></span>
+        <span class="k">Pilar 1 · MEV y arbitraje</span>
+        <h3>El valor oculto de ordenar transacciones</h3>
+        <p>MEV significa <em>Maximal Extractable Value</em>: el valor que se obtiene al decidir qué transacciones entran en un bloque y en qué orden. El arbitraje aprovecha que un mismo token cuesta distinto en dos exchanges descentralizados (DEX): compra donde está barato, vende donde está caro, al instante. Así ayuda a igualar los precios del mercado.</p>
+        <div class="analogy"><b>Analogía</b>La blockchain es una autopista con peaje. El MEV es el carril VIP: quien elige el orden de los coches captura el valor.</div>
+      </article>
+      <article class="pillar">
+        <span class="ico"><svg aria-hidden="true"><use href="#i-loan"/></svg></span>
+        <span class="k">Pilar 2 · Flash loans</span>
+        <h3>Operar con liquidez prestada por una fracción de segundo</h3>
+        <p>Un flash loan es un préstamo que se pide, se usa y se devuelve dentro de una sola transacción. Si al final la operación no alcanza para devolverlo, todo se revierte como si nunca hubiera ocurrido. No pones tu capital como garantía. El coste de red (gas) se paga igual, y por eso cada intento se calcula antes de enviarse.</p>
+        <div class="analogy"><b>Analogía</b>Es como pedir prestado un auto para una vuelta de 1 segundo: o vuelve al garaje con ganancia, o la vuelta nunca existió.</div>
+      </article>
+      <article class="pillar">
+        <span class="ico"><svg aria-hidden="true"><use href="#i-shield"/></svg></span>
+        <span class="k">Pilar 3 · Protégete</span>
+        <h3>Los bots que te cobran sin que lo notes</h3>
+        <p>No todo el MEV es bueno. En un ataque sándwich, un bot ve tu compra en la sala de espera, compra justo antes que tú para subir el precio y vende justo después, quedándose con la diferencia. Aprenderás a evitarlo con un slippage bajo, un RPC privado como Flashbots Protect y compras divididas, y a detectar las plataformas que prometen ganancias fijas con bots.</p>
+        <div class="analogy"><b>Analogía</b>Es como alguien que se cuela en la fila justo delante de ti, sube el precio y te revende lo que ibas a comprar.</div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SECCIÓN 3 · CÓMO FUNCIONA ============ -->
+<section class="band alt" aria-labelledby="eco-t">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">Así trabaja un bot de arbitraje</span>
+      <h2 id="eco-t">Cuatro pasos, en milisegundos, en cada oportunidad</h2>
+      <p>Lo verás paso a paso en la clase, con ejemplos reales de la blockchain.</p>
+    </div>
+    <ol class="steps">
+      <li class="step">
+        <span class="n"><svg aria-hidden="true"><use href="#i-scan"/></svg></span>
+        <h3>Detectar</h3>
+        <p>Escanea mercados y la mempool en tiempo real buscando diferencias de precio.</p>
+        <code>DEX A ≠ DEX B</code>
+      </li>
+      <li class="step">
+        <span class="n"><svg aria-hidden="true"><use href="#i-scale"/></svg></span>
+        <h3>Analizar</h3>
+        <p>Evalúa riesgos, costes de red (gas) y ganancia neta. Si no compensa, la descarta.</p>
+        <code>margen = bruto − gas</code>
+      </li>
+      <li class="step">
+        <span class="n"><svg aria-hidden="true"><use href="#i-bolt"/></svg></span>
+        <h3>Ejecutar</h3>
+        <p>Realiza la operación de forma automática y atómica mediante smart contracts.</p>
+        <code>todo o nada</code>
+      </li>
+      <li class="step">
+        <span class="n"><svg aria-hidden="true"><use href="#i-shield"/></svg></span>
+        <h3>Verificar</h3>
+        <p>Cada operación queda registrada en la blockchain y puedes auditarla tú mismo.</p>
+        <code>tx hash público</code>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<!-- ============ GLOSARIO ============ -->
+<section class="band" aria-labelledby="glo-t">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">Diccionario sin tecnicismos</span>
+      <h2 id="glo-t">Seis palabras que vas a dominar al terminar la clase</h2>
+    </div>
+    <dl class="gloss">
+      <div class="term"><dt>Mempool</dt><dd>La sala de espera pública donde las transacciones aguardan antes de grabarse en la blockchain.</dd></div>
+      <div class="term"><dt>MEV</dt><dd>El valor que obtiene quien decide el orden de las transacciones dentro de un bloque.</dd></div>
+      <div class="term"><dt>DEX</dt><dd>Un exchange descentralizado: se intercambian tokens sin intermediarios, mediante contratos.</dd></div>
+      <div class="term"><dt>Flash loan</dt><dd>Un préstamo que nace y se devuelve en la misma transacción. Si no se devuelve, nada ocurre.</dd></div>
+      <div class="term"><dt>Gas</dt><dd>La comisión que cobra la red por procesar cada transacción. Es el peaje de la autopista.</dd></div>
+      <div class="term"><dt>Bundle</dt><dd>Un paquete privado de transacciones con orden fijo que va directo a los builders. El carril VIP.</dd></div>
+    </dl>
+  </div>
+</section>
+
+<!-- ============ SECCIÓN 4 · PARA QUIÉN ============ -->
+<section class="band alt" aria-labelledby="who-t">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">¿Para quién es esta capacitación?</span>
+      <h2 id="who-t">Si te ves en alguno de estos puntos, esta clase es para ti</h2>
+    </div>
+    <div class="who">
+      <div class="who-card who-yes">
+        <h3>Es para ti si…</h3>
+        <ul>
+          <li><svg aria-hidden="true"><use href="#i-check"/></svg><span><strong>Estás cansado de perder en el trading manual</strong> y quieres entender cómo opera la tecnología institucional.</span></li>
+          <li><svg aria-hidden="true"><use href="#i-check"/></svg><span><strong>Te han ofrecido "bots que ganan solos"</strong> y quieres entender cómo funcionan antes de confiar en ninguno.</span></li>
+          <li><svg aria-hidden="true"><use href="#i-check"/></svg><span><strong>Las gráficas y los indicadores te parecen un idioma extraño</strong> y prefieres reglas claras y matemáticas.</span></li>
+          <li><svg aria-hidden="true"><use href="#i-check"/></svg><span><strong>Te interesan la IA y la blockchain</strong> pero quieres entenderlas antes de poner un solo dólar.</span></li>
+          <li><svg aria-hidden="true"><use href="#i-check"/></svg><span><strong>Valoras la transparencia</strong>: quieres ver cada operación registrada, no capturas de pantalla.</span></li>
+        </ul>
+      </div>
+      <div class="who-card who-no">
+        <h3>No es para ti si…</h3>
+        <ul>
+          <li><svg aria-hidden="true"><use href="#i-x"/></svg><span>Buscas dinero fácil o rendimientos garantizados.</span></li>
+          <li><svg aria-hidden="true"><use href="#i-x"/></svg><span>Quieres invertir dinero que no puedes permitirte perder.</span></li>
+          <li><svg aria-hidden="true"><use href="#i-x"/></svg><span>No estás dispuesto a dedicar una hora a aprender cómo funciona antes de decidir.</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SECCIÓN 5 · REGISTRO + URGENCIA ============ -->
+<section class="band" id="registro" aria-labelledby="reg-t">
+  <div class="wrap reg">
+    <div class="reg-copy">
+      <span class="eyebrow">Último paso</span>
+      <h2 id="reg-t">La clase es <span class="hl">100% gratuita</span>. Tu lugar, no por mucho tiempo.</h2>
+      <p>Regístrate y te enviamos el acceso por WhatsApp. Únete a la comunidad y aprende a ver la maquinaria que la mayoría nunca ve.</p>
+      <div class="urg">
+        <b>Cupo limitado</b>
+        <span>Las sesiones en vivo tienen un número limitado de lugares para poder responder preguntas. El acceso a la grabación también se cierra.</span>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <div id="formBox">
+        <h3>Reserva tu lugar gratis</h3>
+        <p class="fs">Te enviamos el enlace de la clase por WhatsApp y email.</p>
+        <form id="leadForm" novalidate>
+          <div class="field">
+            <label for="f-name">Tu nombre</label>
+            <input id="f-name" name="name" type="text" autocomplete="given-name" placeholder="¿Cómo te llamas?" required>
+            <span class="err" hidden>Escribe tu nombre para continuar.</span>
+          </div>
+          <div class="field">
+            <label for="f-email">Tu email</label>
+            <input id="f-email" name="email" type="email" autocomplete="email" placeholder="tu@email.com" required>
+            <span class="err" hidden>Revisa tu email: falta la @ o el dominio.</span>
+          </div>
+          <div class="field">
+            <label for="f-wa">Tu WhatsApp (con código de país)</label>
+            <input id="f-wa" name="whatsapp" type="tel" autocomplete="tel" placeholder="+52 55 1234 5678" required>
+            <span class="err" hidden>Incluye el código de país, por ejemplo +52 o +57.</span>
+          </div>
+          <button class="btn" type="submit">Únete a la comunidad y ve la clase ahora <span class="arr">→</span></button>
+          <p class="err" id="sendErr" role="alert" hidden style="text-align:center"></p>
+          <p class="micro"><svg aria-hidden="true"><use href="#i-lock"/></svg>Tu información es privada · Sin spam</p>
+        </form>
+      </div>
+      <div class="done" id="doneBox" hidden>
+        <span class="ok"><svg aria-hidden="true"><use href="#i-check"/></svg></span>
+        <h3>¡Listo, <span id="doneName">tu lugar</span> está reservado!</h3>
+        <p>Último paso: entra al grupo de WhatsApp. Allí compartimos el enlace de la clase y los recordatorios.</p>
+        <a class="btn" id="waBtn" href="#" target="_blank" rel="noopener">Entrar al grupo de WhatsApp <span class="arr">→</span></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FAQ ============ -->
+<section class="band alt" aria-labelledby="faq-t">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">Preguntas frecuentes</span>
+      <h2 id="faq-t">Lo que todos preguntan antes de entrar</h2>
+    </div>
+    <div class="faq">
+      <details>
+        <summary>¿Tiene algún costo la clase?</summary>
+        <div class="a"><p>No. La clase es 100% gratuita. Solo necesitas registrarte con tu nombre, email y WhatsApp para recibir el acceso.</p></div>
+      </details>
+      <details>
+        <summary>¿Necesito saber programar o tener experiencia en trading?</summary>
+        <div class="a"><p>No. La clase está pensada para personas sin formación técnica. Usamos analogías simples, como la sala de espera o el carril VIP, para explicar cada concepto.</p></div>
+      </details>
+      <details>
+        <summary>¿Qué es exactamente un bot MEV?</summary>
+        <div class="a"><p>Es un software que observa las transacciones antes de que se confirmen y ejecuta operaciones en milisegundos cuando detecta una oportunidad rentable, como una diferencia de precio entre dos exchanges.</p><p>No todos los bots MEV son iguales. Algunos aportan eficiencia, como el arbitraje o las liquidaciones. Otros perjudican a los usuarios, como los ataques sandwich. En la clase aprenderás a distinguirlos.</p></div>
+      </details>
+      <details>
+        <summary>¿Los flash loans eliminan el riesgo?</summary>
+        <div class="a"><p>Reducen un riesgo concreto: si la operación no alcanza para devolver el préstamo, se revierte completa y no pierdes ese capital. Siguen existiendo otros costes y riesgos, como el gas de las transacciones fallidas y posibles errores en los smart contracts. En la clase los explicamos uno por uno.</p></div>
+      </details>
+      <details>
+        <summary>¿Voy a ganar dinero garantizado?</summary>
+        <div class="a"><p>No. Ninguna tecnología puede garantizar rendimientos, y desconfía de quien te los prometa. La clase es educativa: te enseña cómo funciona esta maquinaria para que tomes tus propias decisiones con información.</p></div>
+      </details>
+      <details>
+        <summary>¿Desde qué países puedo participar?</summary>
+        <div class="a"><p>Desde cualquier país. La clase es en línea y en español. Antes de usar cualquier plataforma cripto, revisa la regulación de tu país.</p></div>
+      </details>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <a class="logo" href="#inicio" aria-label="Cripto sin tecnicismos"><b>CRIPTO<i>·</i>FÁCIL</b><span>Sin tecnicismos</span></a>
+    <p class="legal"><strong>Aviso de riesgo.</strong> Este contenido es educativo y no constituye asesoría financiera, legal ni de inversión. Operar con criptoactivos implica riesgos significativos, incluida la pérdida total del capital, la volatilidad de precios, los costes de red y las fallas en smart contracts. Los resultados pasados no garantizan resultados futuros. Consulta con un profesional y revisa la normativa de tu país antes de invertir.</p>
+    <p>© 2026 Cripto Fácil · Contenido educativo, sin recomendaciones de inversión.</p>
+  </div>
+</footer>
+
+<div class="sticky"><a class="btn" href="#registro">Acceder a la clase gratis <span class="arr">→</span></a></div>
+
+<script>
+/* ===== CONFIGURACIÓN: cambia estos dos valores antes de publicar ===== */
+const CONFIG = {
+  WEBHOOK_URL: "",                                   // URL pública del CRM (carpeta 07 CRM), p. ej. https://tu-crm.com/api/leads. Vacío = no guarda registros.
+  WHATSAPP_URL: "https://chat.whatsapp.com/KA2iqYpGajdCPxItCGSXMH?s=cl&p=a&mlu=4&ilr=4" // enlace de invitación a tu grupo o comunidad
+};
+
+/* ===== Simulación de la mempool (ilustrativa, no son datos reales) ===== */
+(() => {
+  const list = document.getElementById("txs");
+  const goEl = document.getElementById("go"), noEl = document.getElementById("nogo"), blkEl = document.getElementById("blk");
+  const pairs = ["ETH → USDC", "WBTC → ETH", "USDT → DAI", "ARB → ETH", "LINK → USDC", "ETH → PEPE", "UNI → WETH"];
+  const dexes = ["Uniswap ↔ Sushi", "Curve ↔ Balancer", "Uniswap ↔ Curve", "Sushi ↔ PancakeSwap"];
+  const stages = [["DETECTADO", "s-det"], ["ANALIZANDO", "s-ana"], ["EJECUTADO", "s-eje"], ["VERIFICADO", "s-ver"]];
+  const rnd = a => a[Math.floor(Math.random() * a.length)];
+  const hex = n => Array.from({ length: n }, () => "0123456789abcdef"[Math.floor(Math.random() * 16)]).join("");
+  let go = 0, no = 0, block = 21480000 + Math.floor(Math.random() * 9000);
+  blkEl.textContent = "bloque #" + block.toLocaleString("es");
+
+  function make(stageIdx, viable) {
+    const li = document.createElement("li");
+    li.className = "tx";
+    li.innerHTML = `<span class="h">0x${hex(4)}…${hex(2)}</span>
+      <span class="d">${rnd(pairs)} <em>· ${rnd(dexes)} · ${(8 + Math.random() * 30).toFixed(0)}</em></span>
+      <span class="chip"></span>`;
+    li._viable = viable; li._stage = stageIdx;
+    paint(li);
+    return li;
+  }
+  function paint(li) {
+    const chip = li.querySelector(".chip");
+    if (!li._viable && li._stage >= 2) { chip.textContent = "NO-GO"; chip.className = "chip s-no"; return; }
+    const [t, c] = stages[li._stage]; chip.textContent = t; chip.className = "chip " + c;
+    li.classList.toggle("is-vip", li._stage >= 2);
+  }
+  // estado inicial completo
+  [3, 3, 2, 1, 0, 0].forEach((s, i) => { const v = i !== 2; list.appendChild(make(s, v)); });
+  go = 2; no = 1; goEl.textContent = go; noEl.textContent = no;
+
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  setInterval(() => {
+    list.querySelectorAll(".tx").forEach(li => {
+      if (li._stage >= 3 || (!li._viable && li._stage >= 2)) return;
+      li._stage++;
+      if (!li._viable && li._stage === 2) { no++; noEl.textContent = no; }
+      if (li._viable && li._stage === 3) { go++; goEl.textContent = go; }
+      paint(li);
+    });
+    list.prepend(make(0, Math.random() > .35));
+    while (list.children.length > 6) list.lastElementChild.remove();
+    if (Math.random() > .6) { block++; blkEl.textContent = "bloque #" + block.toLocaleString("es"); }
+  }, 1400);
+})();
+
+/* ===== Formulario de registro ===== */
+(() => {
+  const form = document.getElementById("leadForm");
+  // Guarda los parámetros UTM de los anuncios para saber de dónde viene cada lead.
+  const utm = () => {
+    const out = {}, qs = new URLSearchParams(location.search);
+    for (const k of ["utm_source", "utm_medium", "utm_campaign", "utm_content"]) {
+      let v = qs.get(k);
+      try { if (v) sessionStorage.setItem(k, v); else v = sessionStorage.getItem(k); } catch {}
+      if (v) out[k] = v;
+    }
+    return out;
+  };
+  utm();
+  const rules = {
+    name: v => v.trim().length >= 2,
+    email: v => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim()),
+    whatsapp: v => /^\+\d[\d\s-]{7,}$/.test(v.trim())
+  };
+  function check(input) {
+    const ok = rules[input.name](input.value);
+    const field = input.closest(".field");
+    field.classList.toggle("bad", !ok);
+    field.querySelector(".err").hidden = ok;
+    return ok;
+  }
+  form.querySelectorAll("input").forEach(i => i.addEventListener("blur", () => i.value && check(i)));
+  form.addEventListener("submit", async e => {
+    e.preventDefault();
+    const inputs = [...form.querySelectorAll("input")];
+    const allOk = inputs.map(check).every(Boolean);
+    if (!allOk) { inputs.find(i => i.closest(".field").classList.contains("bad")).focus(); return; }
+    const data = Object.fromEntries(new FormData(form));
+    const btn = form.querySelector('button[type="submit"]'), errBox = document.getElementById("sendErr");
+    errBox.hidden = true;
+    if (CONFIG.WEBHOOK_URL) {
+      btn.disabled = true;
+      let ok = false, msg = "";
+      try {
+        const r = await fetch(CONFIG.WEBHOOK_URL, { method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...data, ...utm(), source: "landing-clase-mev" }) });
+        ok = r.ok;
+        if (!ok) msg = (await r.json().catch(() => ({}))).error || "";
+      } catch (err) { /* sin conexión con el CRM */ }
+      btn.disabled = false;
+      if (!ok) {
+        errBox.innerHTML = `${msg || "No pudimos guardar tu registro."} Intenta de nuevo o <a href="${CONFIG.WHATSAPP_URL}" target="_blank" rel="noopener">entra directo al grupo de WhatsApp</a>.`;
+        errBox.hidden = false;
+        return;
+      }
+    }
+    document.getElementById("doneName").textContent = data.name.trim().split(" ")[0];
+    document.getElementById("waBtn").href = CONFIG.WHATSAPP_URL;
+    document.getElementById("formBox").hidden = true;
+    document.getElementById("doneBox").hidden = false;
+  });
+})();
+</script>
+
+</body>
+</html>
