@@ -632,7 +632,7 @@ footer .legal strong { color: #c3cee8; }
       </div>
       <div class="done" id="doneBox" hidden>
         <span class="ok"><svg aria-hidden="true"><use href="#i-check"/></svg></span>
-        <h3>¡Listo, <span id="doneName">tu lugar</span> está reservado!</h3>
+        <h3>¡Listo<span id="doneName"></span>, tu lugar está reservado!</h3>
         <p>Último paso: entra al grupo de WhatsApp. Allí compartimos el enlace de la clase y los recordatorios.</p>
         <a class="btn" id="waBtn" href="#" target="_blank" rel="noopener">Entrar al grupo de WhatsApp <span class="arr">→</span></a>
         <p class="wa-direct">¿Tienes dudas? <a class="js-wa-direct" href="#" target="_blank" rel="noopener">Escríbenos directo por WhatsApp</a></p>
@@ -811,7 +811,7 @@ if (CONFIG.META_PIXEL_ID) {
         return;
       }
     }
-    document.getElementById("doneName").textContent = data.name.trim().split(" ")[0];
+    document.getElementById("doneName").textContent = " " + data.name.trim().split(" ")[0];
     document.getElementById("waBtn").href = CONFIG.WHATSAPP_URL;
     track("Lead", { content_name: "clase-gratuita-mev" });
     document.getElementById("formBox").hidden = true;
