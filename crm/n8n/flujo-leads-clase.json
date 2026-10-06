@@ -25,7 +25,7 @@
             {
               "id": "c1",
               "name": "crm_url",
-              "value": "https://TU-CRM.up.railway.app",
+              "value": "https://landing-production-4679.up.railway.app",
               "type": "string"
             },
             {
