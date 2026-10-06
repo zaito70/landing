@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CRM Clase Gratuita</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+:root{color-scheme:dark;--ink:#05070d;--navy:#0a1226;--panel:#0e1830;--panel2:#121f3d;--line:rgba(120,160,255,.16);--fg:#eaf0ff;--muted:#93a2c6;--neon:#2f7bff;--glow:#5ec8ff;--ok:#2fd4a3;--no:#ff6b7a;--warn:#ffd166;
+--display:"Sora","Segoe UI",sans-serif;--body:"Plus Jakarta Sans","Segoe UI",sans-serif;--mono:"JetBrains Mono",Consolas,monospace}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--ink);color:var(--fg);font:400 14.5px/1.5 var(--body)}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3{font-family:var(--display);margin:0;letter-spacing:-.01em}
+.top{display:flex;align-items:center;gap:16px;padding:14px 20px;border-bottom:1px solid var(--line);background:var(--navy);position:sticky;top:0;z-index:5;flex-wrap:wrap}
+.top h1{font-size:18px}.top h1 i{font-style:normal;color:var(--glow)}
+.top .sp{flex:1}
+.in{background:rgba(5,7,13,.7);border:1px solid rgba(120,160,255,.28);border-radius:10px;padding:9px 12px;min-width:0}
+.in:focus{outline:2px solid var(--glow);outline-offset:1px;border-color:transparent}
+.btn{border:1px solid rgba(150,200,255,.4);background:var(--neon);color:#fff;border-radius:10px;padding:9px 14px;font-weight:700;cursor:pointer;white-space:nowrap;text-decoration:none;display:inline-flex;gap:6px;align-items:center}
+.btn.ghost{background:transparent;color:var(--fg);border-color:var(--line)}
+.btn.wa{background:#1fa855;border-color:#3fd27a}
+.btn:focus-visible{outline:2px solid var(--glow);outline-offset:2px}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.n8n{font:500 12px var(--mono);color:var(--muted);display:flex;gap:6px;align-items:center}
+main{padding:18px 20px 40px;display:grid;gap:18px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:grid;gap:4px}
+.kpi b{font:700 26px/1 var(--display);font-variant-numeric:tabular-nums}
+.kpi span{color:var(--muted);font-size:12.5px}
+.kpi small{color:var(--muted);font:500 11.5px var(--mono)}
+.spark{display:flex;align-items:flex-end;gap:3px;height:34px}
+.spark i{flex:1;background:linear-gradient(var(--glow),var(--neon));border-radius:2px 2px 0 0;min-height:2px;opacity:.85}
+.board{display:grid;grid-template-columns:repeat(6,minmax(220px,1fr));gap:12px;overflow-x:auto;padding-bottom:8px}
+.col{background:var(--navy);border:1px solid var(--line);border-radius:14px;display:flex;flex-direction:column;min-height:300px;min-width:0}
+.col.over{border-color:var(--glow);box-shadow:0 0 0 2px rgba(94,200,255,.2) inset}
+.col h3{font-size:13.5px;padding:12px 14px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:8px}
+.col h3 em{font:500 12px var(--mono);font-style:normal;color:var(--muted)}
+.cards{display:grid;gap:8px;padding:10px;align-content:start;flex:1}
+.card{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--c,var(--neon));border-radius:10px;padding:10px 12px;cursor:pointer;display:grid;gap:3px;text-align:left;width:100%}
+.card:hover{background:var(--panel2)}
+.card b{font-weight:600}
+.card .m{color:var(--muted);font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card .t{display:flex;gap:6px;flex-wrap:wrap;margin-top:3px}
+.tag{font:500 11px var(--mono);padding:2px 7px;border-radius:6px;background:rgba(94,200,255,.1);color:var(--glow)}
+.tag.stale{background:rgba(255,209,102,.12);color:var(--warn)}
+.empty{color:var(--muted);font-size:12.5px;text-align:center;padding:18px 6px}
+/* ficha */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9}
+aside.drawer{position:fixed;top:0;right:0;bottom:0;width:min(460px,100%);background:var(--navy);border-left:1px solid var(--line);z-index:10;display:flex;flex-direction:column}
+.dh{padding:18px 20px;border-bottom:1px solid var(--line);display:grid;gap:10px}
+.dh .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.db{padding:16px 20px;overflow:auto;display:grid;gap:16px;align-content:start}
+dl{display:grid;grid-template-columns:110px 1fr;gap:6px 12px;margin:0}
+dt{color:var(--muted)}dd{margin:0;overflow-wrap:anywhere}
+.acts{display:grid;gap:8px}
+.act{border:1px solid var(--line);border-radius:10px;padding:9px 12px;background:var(--panel)}
+.act small{font:500 11px var(--mono);color:var(--muted);display:block;margin-bottom:3px}
+textarea.in{width:100%;min-height:70px;resize:vertical}
+.login{max-width:380px;margin:12vh auto;padding:28px;background:var(--panel);border:1px solid var(--line);border-radius:18px;display:grid;gap:14px}
+.login p{color:var(--muted);margin:0}
+.err{color:var(--no);font-size:13px}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--panel2);border:1px solid var(--line);padding:10px 16px;border-radius:10px;z-index:20}
+@media (max-width:640px){.top{padding:12px 16px}main{padding:14px 16px 32px}dl{grid-template-columns:90px 1fr}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<section class="login" id="login" hidden>
+  <h2>Entrar al CRM</h2>
+  <p>Escribe la contraseña del CRM (la variable CRM_TOKEN del archivo .env).</p>
+  <form id="loginForm" style="display:grid;gap:10px">
+    <label for="tok" style="font-weight:600">Contraseña</label>
+    <input class="in" id="tok" type="password" autocomplete="current-password" required>
+    <button class="btn" type="submit">Entrar</button>
+    <span class="err" id="loginErr" hidden>Contraseña incorrecta.</span>
+  </form>
+</section>
+
+<div id="app" hidden>
+  <header class="top">
+    <h1>CRM <i>Clase Gratuita</i></h1>
+    <input class="in" id="search" type="search" placeholder="Buscar nombre, email, WhatsApp o etiqueta" style="flex:1;max-width:380px">
+    <span class="sp"></span>
+    <span class="n8n" id="n8n"></span>
+    <a class="btn ghost" id="csv" href="#">Exportar CSV</a>
+    <button class="btn ghost" id="refresh" type="button">Actualizar</button>
+  </header>
+  <main>
+    <section class="kpis" id="kpis" aria-label="Resumen"></section>
+    <section class="board" id="board" aria-label="Embudo de leads"></section>
+  </main>
+</div>
+
+<div class="scrim" id="scrim" hidden></div>
+<aside class="drawer" id="drawer" hidden aria-label="Ficha del lead"></aside>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+const STAGE_INFO = {
+  nuevo:      { label: "Nuevo",            color: "#5ec8ff" },
+  contactado: { label: "Contactado",       color: "#2f7bff" },
+  asistio:    { label: "Asistió a la clase", color: "#a78bfa" },
+  interesado: { label: "Interesado",       color: "#ffd166" },
+  cliente:    { label: "Cliente",          color: "#2fd4a3" },
+  perdido:    { label: "Perdido",          color: "#ff6b7a" },
+};
+// Mensaje que se precarga al abrir WhatsApp desde la ficha.
+const WA_TEMPLATE = n => `Hola ${n} 👋, te escribo porque te registraste a la clase gratuita sobre bots MEV y arbitraje. ¿Pudiste ver el enlace de acceso?`;
+
+let TOKEN = "", leads = [], STAGES = Object.keys(STAGE_INFO);
+try { TOKEN = sessionStorage.getItem("crm_token") || ""; } catch {}
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const fmt = d => d ? new Date(d.replace(" ", "T") + "Z").toLocaleString("es", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : "—";
+const daysSince = d => d ? (Date.now() - new Date(d.replace(" ", "T") + "Z")) / 864e5 : Infinity;
+
+function toast(msg) { const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(t._h); t._h = setTimeout(() => t.hidden = true, 2600); }
+
+async function api(path, opts = {}) {
+  const r = await fetch(path, { ...opts, headers: { "Content-Type": "application/json", Authorization: `Bearer ${TOKEN}`, ...(opts.headers || {}) } });
+  if (r.status === 401) { showLogin(true); throw new Error("401"); }
+  const data = r.headers.get("content-type")?.includes("json") ? await r.json() : await r.text();
+  if (!r.ok) { toast(data.error || "No se pudo completar la acción."); throw new Error(data.error); }
+  return data;
+}
+
+function showLogin(bad) {
+  $("#app").hidden = true; $("#login").hidden = false; $("#loginErr").hidden = !bad || !TOKEN;
+  $("#tok").focus();
+}
+$("#loginForm").addEventListener("submit", async e => {
+  e.preventDefault(); TOKEN = $("#tok").value.trim();
+  try { sessionStorage.setItem("crm_token", TOKEN); } catch {}
+  boot();
+});
+
+async function boot() {
+  try {
+    const meta = await api("/api/meta");
+    STAGES = meta.stages;
+    $("#n8n").innerHTML = `<span class="dot" style="background:${meta.n8n ? "var(--ok)" : "var(--muted)"}"></span>n8n ${meta.n8n ? "conectado" : "sin configurar"}`;
+    $("#login").hidden = true; $("#app").hidden = false;
+    await load();
+  } catch (e) { if (e.message !== "401") console.error(e); }
+}
+
+async function load() {
+  const qs = $("#search").value.trim();
+  const [list, stats] = await Promise.all([api("/api/leads" + (qs ? `?q=${encodeURIComponent(qs)}` : "")), api("/api/stats")]);
+  leads = list; renderKpis(stats); renderBoard();
+}
+
+function renderKpis(s) {
+  const by = Object.fromEntries(s.stages.map(x => [x.stage, x.n]));
+  const total = s.stages.reduce((a, x) => a + x.n, 0);
+  const pct = (a, b) => b ? Math.round(100 * a / b) + " %" : "—";
+  const reached = st => STAGES.slice(STAGES.indexOf(st)).filter(x => x !== "perdido").reduce((a, x) => a + (by[x] || 0), 0);
+  const days = [...Array(14)].map((_, i) => { const d = new Date(Date.now() - (13 - i) * 864e5).toISOString().slice(0, 10); return s.daily.find(x => x.d === d)?.n || 0; });
+  const max = Math.max(1, ...days), today = days[13];
+  const top = s.sources[0], leadsTxt = n => `${n} lead${n === 1 ? "" : "s"}`;
+  $("#kpis").innerHTML = `
+    <div class="kpi"><span>Leads totales</span><b>${total}</b><small>${today} hoy</small></div>
+    <div class="kpi"><span>Registros · 14 días</span><div class="spark" aria-label="Registros por día">${days.map(n => `<i style="height:${Math.round(100 * n / max)}%" title="${n}"></i>`).join("")}</div></div>
+    <div class="kpi"><span>Contactados</span><b>${pct(reached("contactado"), total)}</b><small>${reached("contactado")} de ${total}</small></div>
+    <div class="kpi"><span>Asistieron a la clase</span><b>${pct(reached("asistio"), total)}</b><small>${leadsTxt(reached("asistio"))}</small></div>
+    <div class="kpi"><span>Clientes</span><b>${by.cliente || 0}</b><small>${pct(by.cliente || 0, total)} del total</small></div>
+    <div class="kpi"><span>Fuente principal</span><b style="font-size:20px">${esc(top?.s || "—")}</b><small>${top ? leadsTxt(top.n) : "sin datos"}</small></div>`;
+}
+
+function renderBoard() {
+  $("#board").innerHTML = STAGES.map(st => {
+    const items = leads.filter(l => l.stage === st), info = STAGE_INFO[st] || { label: st, color: "var(--neon)" };
+    return `<div class="col" data-stage="${st}">
+      <h3><span><span class="dot" style="background:${info.color}"></span> ${info.label}</span><em>${items.length}</em></h3>
+      <div class="cards">${items.length ? items.map(l => card(l, info.color)).join("") : `<p class="empty">Arrastra aquí un lead</p>`}</div>
+    </div>`;
+  }).join("");
+  document.querySelectorAll(".card").forEach(c => {
+    c.addEventListener("click", () => openLead(+c.dataset.id));
+    c.addEventListener("dragstart", e => e.dataTransfer.setData("text/plain", c.dataset.id));
+  });
+  document.querySelectorAll(".col").forEach(col => {
+    col.addEventListener("dragover", e => { e.preventDefault(); col.classList.add("over"); });
+    col.addEventListener("dragleave", () => col.classList.remove("over"));
+    col.addEventListener("drop", e => { e.preventDefault(); col.classList.remove("over"); moveLead(+e.dataTransfer.getData("text/plain"), col.dataset.stage); });
+  });
+}
+
+function card(l, color) {
+  const stale = l.stage === "nuevo" && daysSince(l.created_at) > 1;
+  const tags = l.tags ? l.tags.split(",").map(t => t.trim()).filter(Boolean) : [];
+  return `<button class="card" draggable="true" data-id="${l.id}" style="--c:${color}" type="button">
+    <b>${esc(l.name)}</b><span class="m">${esc(l.whatsapp)} · ${esc(l.email)}</span>
+    <span class="t">${stale ? `<span class="tag stale">sin contactar +24 h</span>` : ""}${l.utm_source ? `<span class="tag">${esc(l.utm_source)}</span>` : ""}${tags.map(t => `<span class="tag">${esc(t)}</span>`).join("")}</span>
+  </button>`;
+}
+
+async function moveLead(id, stage) {
+  const l = leads.find(x => x.id === id); if (!l || l.stage === stage) return;
+  await api(`/api/leads/${id}`, { method: "PATCH", body: JSON.stringify({ stage }) });
+  toast(`${l.name} → ${STAGE_INFO[stage]?.label || stage}`); load();
+}
+
+async function openLead(id) {
+  const [l, acts] = await Promise.all([api(`/api/leads/${id}`), api(`/api/leads/${id}/activities`)]);
+  const wa = `https://wa.me/${l.whatsapp.replace(/\D/g, "")}?text=${encodeURIComponent(WA_TEMPLATE(l.name.split(" ")[0]))}`;
+  const d = $("#drawer");
+  d.innerHTML = `
+    <div class="dh">
+      <div class="row" style="justify-content:space-between"><h2 style="font-size:20px">${esc(l.name)}</h2><button class="btn ghost" id="close" type="button">Cerrar</button></div>
+      <div class="row">
+        <label for="stage" class="n8n">Etapa</label>
+        <select class="in" id="stage">${STAGES.map(s => `<option value="${s}" ${s === l.stage ? "selected" : ""}>${STAGE_INFO[s]?.label || s}</option>`).join("")}</select>
+        <a class="btn wa" id="wa" href="${wa}" target="_blank" rel="noopener">Escribir por WhatsApp</a>
+      </div>
+    </div>
+    <div class="db">
+      <dl>
+        <dt>WhatsApp</dt><dd>${esc(l.whatsapp)}</dd>
+        <dt>Email</dt><dd>${esc(l.email)}</dd>
+        <dt>Registro</dt><dd>${fmt(l.created_at)}</dd>
+        <dt>Último contacto</dt><dd>${fmt(l.last_contact_at)}</dd>
+        <dt>Fuente</dt><dd>${esc(l.source)}${l.utm_source ? ` · ${esc(l.utm_source)} / ${esc(l.utm_medium)} / ${esc(l.utm_campaign)}` : ""}</dd>
+        <dt><label for="tags">Etiquetas</label></dt><dd><input class="in" id="tags" value="${esc(l.tags)}" placeholder="separadas por coma" style="width:100%"></dd>
+      </dl>
+      <form id="actForm" style="display:grid;gap:8px">
+        <label for="actBody" style="font-weight:600">Registrar actividad</label>
+        <div class="row" style="display:flex;gap:8px">
+          <select class="in" id="actKind"><option value="nota">Nota</option><option value="whatsapp">WhatsApp</option><option value="llamada">Llamada</option><option value="email">Email</option></select>
+        </div>
+        <textarea class="in" id="actBody" placeholder="Qué pasó, qué dijo, próximo paso…"></textarea>
+        <button class="btn" type="submit">Guardar actividad</button>
+      </form>
+      <div class="acts"><h3 style="font-size:14px">Historial</h3>${acts.map(a => `<div class="act"><small>${esc(a.kind)} · ${fmt(a.created_at)}</small>${esc(a.body)}</div>`).join("") || `<p class="empty">Sin actividad todavía.</p>`}</div>
+    </div>`;
+  d.hidden = false; $("#scrim").hidden = false;
+  $("#close").onclick = closeLead;
+  $("#stage").onchange = async e => { await api(`/api/leads/${id}`, { method: "PATCH", body: JSON.stringify({ stage: e.target.value }) }); toast("Etapa actualizada"); load(); openLead(id); };
+  $("#tags").onchange = async e => { await api(`/api/leads/${id}`, { method: "PATCH", body: JSON.stringify({ tags: e.target.value }) }); toast("Etiquetas guardadas"); load(); };
+  $("#wa").onclick = () => api(`/api/leads/${id}/activities`, { method: "POST", body: JSON.stringify({ kind: "whatsapp", body: "Se abrió WhatsApp con el mensaje de seguimiento." }) }).then(load);
+  $("#actForm").onsubmit = async e => {
+    e.preventDefault(); const body = $("#actBody").value.trim(); if (!body) return;
+    await api(`/api/leads/${id}/activities`, { method: "POST", body: JSON.stringify({ kind: $("#actKind").value, body }) });
+    toast("Actividad guardada"); openLead(id); load();
+  };
+}
+function closeLead() { $("#drawer").hidden = true; $("#scrim").hidden = true; }
+$("#scrim").onclick = closeLead;
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeLead(); });
+
+let st; $("#search").addEventListener("input", () => { clearTimeout(st); st = setTimeout(load, 250); });
+$("#refresh").onclick = load;
+$("#csv").onclick = async e => {
+  e.preventDefault();
+  const r = await fetch("/api/export.csv", { headers: { Authorization: `Bearer ${TOKEN}` } });
+  if (!r.ok) return toast("No se pudo exportar.");
+  const url = URL.createObjectURL(await r.blob()), a = Object.assign(document.createElement("a"), { href: url, download: "leads.csv" });
+  a.click(); URL.revokeObjectURL(url);
+};
+setInterval(() => { if (!$("#app").hidden && $("#drawer").hidden) load(); }, 30000);
+
+TOKEN ? boot() : showLogin(false);
+</script>
+</body>
+</html>

@@ -1,0 +1,371 @@
+{
+  "name": "CRM · Seguimiento de leads de la clase gratuita",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "crm-eventos",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "a1",
+      "name": "Evento del CRM",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "webhookId": "crm-eventos"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c1",
+              "name": "crm_url",
+              "value": "https://TU-CRM.up.railway.app",
+              "type": "string"
+            },
+            {
+              "id": "c2",
+              "name": "remitente",
+              "value": "Cripto Fácil <risasazair@gmail.com>",
+              "type": "string"
+            },
+            {
+              "id": "c3",
+              "name": "enlace_clase",
+              "value": "https://chat.whatsapp.com/KA2iqYpGajdCPxItCGSXMH",
+              "type": "string"
+            },
+            {
+              "id": "c4",
+              "name": "whatsapp_directo",
+              "value": "https://wa.me/573235660403",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "a2",
+      "name": "Configuración",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "i1",
+              "leftValue": "={{ $json.body.event }}",
+              "rightValue": "lead.created",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a3",
+      "name": "¿Lead nuevo?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        440,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $('Configuración').item.json.remitente }}",
+        "toEmail": "={{ $('Evento del CRM').item.json.body.lead.email }}",
+        "subject": "Tu lugar en la clase gratuita está reservado",
+        "emailFormat": "text",
+        "text": "=Hola {{ $('Evento del CRM').item.json.body.lead.name.split(' ')[0] }},\n\nGracias por registrarte a la clase gratuita sobre bots MEV y arbitraje.\n\nEntra al grupo para recibir el enlace y los recordatorios:\n{{ $('Configuración').item.json.enlace_clase }}\n\nRecuerda: la clase es educativa y no es asesoría financiera.\n\n¿Dudas? Escríbenos por WhatsApp: {{ $('Configuración').item.json.whatsapp_directo }}\n\nNos vemos en la clase.",
+        "options": {}
+      },
+      "id": "a4",
+      "name": "Email de bienvenida",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        680,
+        200
+      ],
+      "credentials": {
+        "smtp": {
+          "id": "",
+          "name": "SMTP"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Configuración').item.json.crm_url }}/api/leads/{{ $('Evento del CRM').item.json.body.lead.id }}/activities",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{ \"kind\": \"automatizacion\", \"body\": \"n8n envió el email de bienvenida.\" }",
+        "options": {}
+      },
+      "id": "a5",
+      "name": "Anotar en CRM: bienvenida",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        900,
+        200
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "CRM token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 24,
+        "unit": "hours"
+      },
+      "id": "a6",
+      "name": "Esperar 24 h",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1120,
+        200
+      ],
+      "webhookId": "espera-24h"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Configuración').item.json.crm_url }}/api/leads/{{ $('Evento del CRM').item.json.body.lead.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "a7",
+      "name": "Consultar lead en CRM",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1340,
+        200
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "CRM token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "i2",
+              "leftValue": "={{ $json.stage }}",
+              "rightValue": "nuevo",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a8",
+      "name": "¿Sigue sin contactar?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1560,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $('Configuración').item.json.remitente }}",
+        "toEmail": "={{ $('Consultar lead en CRM').item.json.email }}",
+        "subject": "¿Te llegó el acceso a la clase?",
+        "emailFormat": "text",
+        "text": "=Hola {{ $('Consultar lead en CRM').item.json.name.split(' ')[0] }},\n\nAyer te registraste a la clase gratuita sobre bots MEV y arbitraje y queremos asegurarnos de que tengas el acceso.\n\nEntra aquí: {{ $('Configuración').item.json.enlace_clase }}\n\nSi tienes alguna duda, responde este correo o escríbenos por WhatsApp: {{ $('Configuración').item.json.whatsapp_directo }}",
+        "options": {}
+      },
+      "id": "a9",
+      "name": "Email recordatorio",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1780,
+        120
+      ],
+      "credentials": {
+        "smtp": {
+          "id": "",
+          "name": "SMTP"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Configuración').item.json.crm_url }}/api/leads/{{ $('Consultar lead en CRM').item.json.id }}/activities",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{ \"kind\": \"automatizacion\", \"body\": \"n8n envió el recordatorio de 24 h (seguía sin contactar).\" }",
+        "options": {}
+      },
+      "id": "a10",
+      "name": "Anotar en CRM: recordatorio",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2000,
+        120
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "CRM token"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Evento del CRM": {
+      "main": [
+        [
+          {
+            "node": "Configuración",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Configuración": {
+      "main": [
+        [
+          {
+            "node": "¿Lead nuevo?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Lead nuevo?": {
+      "main": [
+        [
+          {
+            "node": "Email de bienvenida",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Email de bienvenida": {
+      "main": [
+        [
+          {
+            "node": "Anotar en CRM: bienvenida",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anotar en CRM: bienvenida": {
+      "main": [
+        [
+          {
+            "node": "Esperar 24 h",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Esperar 24 h": {
+      "main": [
+        [
+          {
+            "node": "Consultar lead en CRM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar lead en CRM": {
+      "main": [
+        [
+          {
+            "node": "¿Sigue sin contactar?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Sigue sin contactar?": {
+      "main": [
+        [
+          {
+            "node": "Email recordatorio",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Email recordatorio": {
+      "main": [
+        [
+          {
+            "node": "Anotar en CRM: recordatorio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
