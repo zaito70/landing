@@ -20,4 +20,5 @@ Vercel la publica como sitio estático: no necesita build ni framework. Cada `gi
 
 - Landing: https://landing-three-beta-35.vercel.app (Vercel, equipo zaito71, repo `zaito70/landing`)
 - CRM: https://landing-production-4679.up.railway.app (Railway, carpeta `crm/`)
+- n8n: https://n8n-production-880a.up.railway.app (Railway, servicio `n8n` con volumen en `/home/node/.n8n`). El CRM le avisa en `/webhook/crm-eventos`.
 - Los commits deben salir con el email de la cuenta de Vercel (`zaito1170@gmail.com`); si no, Vercel bloquea el despliegue.
