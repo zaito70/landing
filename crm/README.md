@@ -49,7 +49,7 @@ El CRM envía a n8n estos eventos: `lead.created`, `lead.repeated` (alguien se r
 Esta carpeta vive dentro del repo de la landing. Vercel la ignora (`.vercelignore`) y Railway la despliega con el `Dockerfile`.
 
 1. En Railway: **New → GitHub Repo → landing**. En el servicio, **Settings → Root Directory** = `/crm`.
-2. **Variables**: `CRM_TOKEN` (contraseña larga), `ALLOWED_ORIGINS` (la URL de la landing en Vercel) y, cuando tengas n8n, `N8N_WEBHOOK_URL`.
+2. **Variables**: `DB_PATH=/data/crm.sqlite` (o no la definas: el Dockerfile ya la pone), `CRM_TOKEN` (contraseña larga), `ALLOWED_ORIGINS` (la URL de la landing en Vercel) y, cuando tengas n8n, `N8N_WEBHOOK_URL`.
 3. **Volumen**: clic derecho en el servicio → *Attach volume*, con ruta de montaje `/data`. Ahí se guarda `crm.sqlite`; sin volumen, los leads se borran en cada despliegue.
 4. **Settings → Networking → Generate Domain**. Pon esa URL + `/api/leads` en `WEBHOOK_URL` de `../index.html`.
 
