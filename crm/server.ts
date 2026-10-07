@@ -7,6 +7,7 @@ const CRM_TOKEN = process.env.CRM_TOKEN ?? "";
 const N8N_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL ?? "";
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS ?? "*").split(",").map(s => s.trim());
 const DB_PATH = process.env.DB_PATH ?? "crm.sqlite";
+const STARTED = new Date().toISOString();
 
 if (!CRM_TOKEN) console.warn("⚠ CRM_TOKEN vacío: el panel queda sin contraseña. Defínelo en .env");
 
@@ -190,7 +191,7 @@ const server = Bun.serve({
     try {
       // Pública: la usa la landing.
       if (path === "/api/leads" && req.method === "POST") return withCors(await createLead(req, ip));
-      if (path === "/health") return json({ ok: true });
+      if (path === "/health") return json({ ok: true, started: STARTED });
       if (path === "/" || path === "/index.html") return new Response(panel, { headers: { "Content-Type": "text/html; charset=utf-8" } });
 
       // Privadas: requieren CRM_TOKEN.
