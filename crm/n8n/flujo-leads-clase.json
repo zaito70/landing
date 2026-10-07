@@ -31,7 +31,7 @@
             {
               "id": "c2",
               "name": "remitente",
-              "value": "Cripto Fácil <risasazair@gmail.com>",
+              "value": "risasazair@gmail.com",
               "type": "string"
             },
             {
@@ -94,25 +94,27 @@
     },
     {
       "parameters": {
-        "fromEmail": "={{ $('Configuración').item.json.remitente }}",
-        "toEmail": "={{ $('Evento del CRM').item.json.body.lead.email }}",
+        "sendTo": "={{ $('Evento del CRM').item.json.body.lead.email }}",
         "subject": "Tu lugar en la clase gratuita está reservado",
-        "emailFormat": "text",
-        "text": "=Hola {{ $('Evento del CRM').item.json.body.lead.name.split(' ')[0] }},\n\nGracias por registrarte a la clase gratuita sobre bots MEV y arbitraje.\n\nEntra al grupo para recibir el enlace y los recordatorios:\n{{ $('Configuración').item.json.enlace_clase }}\n\nRecuerda: la clase es educativa y no es asesoría financiera.\n\n¿Dudas? Escríbenos por WhatsApp: {{ $('Configuración').item.json.whatsapp_directo }}\n\nNos vemos en la clase.",
-        "options": {}
+        "emailType": "text",
+        "message": "=Hola {{ $('Evento del CRM').item.json.body.lead.name.split(' ')[0] }},\n\nGracias por registrarte a la clase gratuita sobre bots MEV y arbitraje.\n\nEntra al grupo para recibir el enlace y los recordatorios:\n{{ $('Configuración').item.json.enlace_clase }}\n\nRecuerda: la clase es educativa y no es asesoría financiera.\n\n¿Dudas? Escríbenos por WhatsApp: {{ $('Configuración').item.json.whatsapp_directo }}\n\nNos vemos en la clase.",
+        "options": {
+          "senderName": "Cripto Fácil",
+          "appendAttribution": false
+        }
       },
       "id": "a4",
       "name": "Email de bienvenida",
-      "type": "n8n-nodes-base.emailSend",
+      "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
       "position": [
         680,
         200
       ],
       "credentials": {
-        "smtp": {
+        "gmailOAuth2": {
           "id": "",
-          "name": "SMTP"
+          "name": "Gmail risasazair"
         }
       }
     },
@@ -213,25 +215,27 @@
     },
     {
       "parameters": {
-        "fromEmail": "={{ $('Configuración').item.json.remitente }}",
-        "toEmail": "={{ $('Consultar lead en CRM').item.json.email }}",
+        "sendTo": "={{ $('Consultar lead en CRM').item.json.email }}",
         "subject": "¿Te llegó el acceso a la clase?",
-        "emailFormat": "text",
-        "text": "=Hola {{ $('Consultar lead en CRM').item.json.name.split(' ')[0] }},\n\nAyer te registraste a la clase gratuita sobre bots MEV y arbitraje y queremos asegurarnos de que tengas el acceso.\n\nEntra aquí: {{ $('Configuración').item.json.enlace_clase }}\n\nSi tienes alguna duda, responde este correo o escríbenos por WhatsApp: {{ $('Configuración').item.json.whatsapp_directo }}",
-        "options": {}
+        "emailType": "text",
+        "message": "=Hola {{ $('Consultar lead en CRM').item.json.name.split(' ')[0] }},\n\nAyer te registraste a la clase gratuita sobre bots MEV y arbitraje y queremos asegurarnos de que tengas el acceso.\n\nEntra aquí: {{ $('Configuración').item.json.enlace_clase }}\n\nSi tienes alguna duda, responde este correo o escríbenos por WhatsApp: {{ $('Configuración').item.json.whatsapp_directo }}",
+        "options": {
+          "senderName": "Cripto Fácil",
+          "appendAttribution": false
+        }
       },
       "id": "a9",
       "name": "Email recordatorio",
-      "type": "n8n-nodes-base.emailSend",
+      "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
       "position": [
         1780,
         120
       ],
       "credentials": {
-        "smtp": {
+        "gmailOAuth2": {
           "id": "",
-          "name": "SMTP"
+          "name": "Gmail risasazair"
         }
       }
     },

@@ -55,11 +55,14 @@ Esta carpeta vive dentro del repo de la landing. Vercel la ignora (`.vercelignor
 
 ## Correos desde Gmail (n8n)
 
-La credencial **SMTP** de n8n para `risasazair@gmail.com`:
+Railway bloquea SMTP en los planes Free/Hobby, así que el flujo usa el nodo **Gmail** de n8n, que envía por la API de Google (HTTPS).
 
-- Activa la verificación en 2 pasos en la cuenta de Google y crea una *contraseña de aplicación* en https://myaccount.google.com/apppasswords.
-- Host `smtp.gmail.com`, puerto `465`, SSL activado, usuario `risasazair@gmail.com`, contraseña = la contraseña de aplicación (16 letras), no la normal.
-- Gmail gratis permite unos 500 envíos al día.
+Credencial **Gmail OAuth2** en n8n para `risasazair@gmail.com`:
+
+1. En https://console.cloud.google.com crea un proyecto y activa **Gmail API**.
+2. **Pantalla de consentimiento de OAuth**: tipo *Externo*, añade `risasazair@gmail.com` como usuario de prueba y luego pulsa **Publicar app** (en modo prueba el acceso caduca a los 7 días).
+3. **Credenciales → Crear ID de cliente OAuth** → *Aplicación web*, con URI de redirección `https://n8n-production-880a.up.railway.app/rest/oauth2-credential/callback`.
+4. En n8n, credencial **Gmail OAuth2 API**: pega el Client ID y el Client Secret y pulsa **Sign in with Google**. Google avisará de que la app no está verificada: *Configuración avanzada → Ir a…* y acepta.
 
 ## Seguridad
 
