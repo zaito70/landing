@@ -1,0 +1,17 @@
+Sección,Dato,Valor,Enlace o nota
+Canal,Nombre,Nico vs. Los Bots,
+Canal,Usuario propuesto,@NicoVsLosBots,https://www.youtube.com/@NicoVsLosBots
+Canal,Descripción,Texto listo para YouTube Studio,12 Prompts YouTube MEV\Descripcion_Canal.txt
+Canal,Formato,Tu vida en cada nivel de… (referencia: DevPsyche),https://www.youtube.com/@TheDevPsyche
+Colores de marca,Azul celeste,#5DBEEB,Nico y lo importante (color principal)
+Colores de marca,Celeste profundo,#1C78AB,Textos destacados y enlaces
+Colores de marca,Negro carbón,#1E2226,Los bots y los fondos oscuros
+Colores de marca,Plateado,#C3CAD2,"El resto del mercado, detalles y bordes"
+Colores de marca,Blanco,#FFFFFF,Fondos limpios y texto sobre oscuro
+Colores de marca,Amarillo alerta,#FFD400,Solo miniaturas: recuadro de la excusa
+Colores de marca,Rojo flecha,#E53935,Solo miniaturas: la flecha
+Embudo,Clase gratuita (landing),Bots MEV sin tecnicismos,https://landing-three-beta-35.vercel.app
+Progreso,Videos con guion,1 de 15,
+Progreso,Imágenes de escenas,2 de 162,
+Hoja,Última actualización,20/10/2026 18:16,
+Hoja,Cómo se actualiza,Se publica cada vez que se genera un recurso del canal; la hoja lo toma en menos de una hora,
